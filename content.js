@@ -10,7 +10,7 @@ _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
 
 var ALCHEMY_API_URL = "http://access.alchemyapi.com/calls/url/URLGetRankedConcepts"
   , ALCHEMY_API_KEY = "951a2ee54070d01a1ef3950a16cb7cadc2ff6590"
-  , WIKIPEDIA_API = _.template("http://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exintro=&titles={{query}}");
+  , WIKIPEDIA_API = _.template("http://en.wikipedia.org/w/api.php?action=query&prop=extracts&excontinue=&format=json&exintro=&redirects=&titles={{query}}");
 
 /* -----
 | Controller
