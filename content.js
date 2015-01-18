@@ -65,6 +65,11 @@ function wikipediaSummary(string, callback) {
     });
 }
 
+function articleContainer() {
+    var selector = $("p+p").parent();
+    return selector;
+}
+
 function buildSnippets(summaries) {
     $(".DTWH").remove();
 
@@ -86,15 +91,15 @@ function buildSnippets(summaries) {
 
     var mark = _.template('<mark class="DTWH DTWH-mark" data-concept="{{a}}">{{b}}</mark>');
 
-    var newHTML = document.body.innerHTML;
+    var newHTML = articleContainer().html();
     _.each(summaries, function(summary) {
-        var search = summary.concept;
-        newHTML = newHTML.replace(search, mark({a:summary.concept,b:search}));
+        var search = new RegExp(summary.concept, "g");
+        newHTML = newHTML.replace(search, mark({a:summary.concept,b:summary.concept}));
     })
 
     console.log("Marked terms");
 
-    document.body.innerHTML = newHTML;
+    articleContainer().html(newHTML);
 
     _.each(summaries, function(summary) {
         $('mark[data-concept="'+summary.concept+'"]').append(snippetTemplate(summary));
