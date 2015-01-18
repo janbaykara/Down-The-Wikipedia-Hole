@@ -8,9 +8,17 @@
 
 _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
 
-var ALCHEMY_API_URL = "http://access.alchemyapi.com/calls/url/URLGetRankedConcepts"
+var ALCHEMY_API_URL = "http://access.alchemyapi.com/calls/url/URLGetRankedKeywords"
   , ALCHEMY_API_KEY = "951a2ee54070d01a1ef3950a16cb7cadc2ff6590"
-  , WIKIPEDIA_API = _.template("http://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exintro=&titles={{query}}");
+  , WIKIPEDIA_API = _.template("http://en.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=500&excontinue=&format=json&exintro=&redirects=&titles={{query}}");
+    // &titles=separated|like|this
+    // prop=pageterms
+        // alt names
+        // description
+    // prop=pageprops
+        // page_image
+    // export=
+        // $("page") <title>=pagetitle <text>
 
 /* -----
 | Controller
@@ -20,23 +28,24 @@ function JumpDownTheWikipediaHole(message) {
     console.log("=================\nWikipedia append initialising");
 
     alchemyConcepts(document.URL, function(data) {
-        var concepts = data.concepts;
+        var concepts = data.keywords;
+        var relevantKeywords = _.filter(concepts, function(concept) { return concept.relevance > 0.8 });
         var summaries = [];
-        _.each(concepts, function(concept) {
-            // Fetch Wikipedia summary
+        // console.log(concepts);
+        _.each(relevantKeywords, function(concept) {
+            console.log(concept);
             wikipediaSummary(concept.text, function(summary) {
                 summaries.push({
                     'concept': concept.text,
                     'wikipedia': summary
                 });
 
-                if(summaries.length == concepts.length)
+                if(summaries.length == relevantKeywords.length) {
+                    console.log("Building snippets.")
+                    console.log(summaries);
                     buildSnippets(summaries);
+                }
             });
-
-            // Some other sources?
-
-            // Find some images
         });
     });
 }
@@ -50,8 +59,8 @@ function alchemyConcepts(pageURL, callback) {
     $.getJSON(ALCHEMY_API_URL, {
         url: pageURL,
         apikey: ALCHEMY_API_KEY,
-        // maxRetrieve: 10,
-        outputMode: 'json'
+        outputMode: 'json',
+        keywordExtractMode: 'strict'
     })
     .success(function(data) {
         callback(data);
@@ -66,9 +75,8 @@ function wikipediaSummary(string, callback) {
 }
 
 function buildSnippets(summaries) {
-    $(".DTWH").remove();
-
     console.log(summaries);
+    $(".DTWH").remove();
 
     var snippetTemplate = _.template(
         "<article class='DTWH DTWH-snippet'>\
@@ -88,19 +96,16 @@ function buildSnippets(summaries) {
 
     var newHTML = document.body.innerHTML;
     _.each(summaries, function(summary) {
+        console.log(summary);
         var search = summary.concept;
         newHTML = newHTML.replace(search, mark({a:summary.concept,b:search}));
     })
-
-    console.log("Marked terms");
 
     document.body.innerHTML = newHTML;
 
     _.each(summaries, function(summary) {
         $('mark[data-concept="'+summary.concept+'"]').append(snippetTemplate(summary));
     });
-
-    console.log("Appended snippets");
 }
 
 /* -----
